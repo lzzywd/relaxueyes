@@ -1,0 +1,105 @@
+{
+  "name": "relaxueyes",
+  "version": "1.0.0",
+  "description": "护眼提醒应用",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "cross-env NODE_ENV=development concurrently \"webpack serve --hot\" \"wait-on http://localhost:9000 && electron .\"",
+    "build": "cross-env NODE_ENV=production webpack --progress",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "node src/create-icons.js",
+    "lint": "eslint --ext .js,.vue src/",
+    "lint:fix": "eslint --ext .js,.vue src/ --fix"
+  },
+  "author": "V字小钢炮",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-loader": "^9.2.1",
+    "concurrently": "^8.2.2",
+    "copy-webpack-plugin": "^12.0.2",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.11.0",
+    "electron": "^25.0.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.19.2",
+    "html-webpack-plugin": "^5.6.3",
+    "mini-css-extract-plugin": "^2.9.2",
+    "vue-loader": "^17.4.2",
+    "vue-template-compiler": "^2.7.16",
+    "wait-on": "^7.2.0",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.2"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.0.10",
+    "electron-store": "^8.1.0",
+    "vue": "^3.3.4"
+  },
+  "build": {
+    "appId": "com.relaxueyes.app",
+    "productName": "RelaxUeyes",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "src/icon--green.png",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "dmg": {
+      "icon": "src/icon--green.png",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "files": [
+      "dist/**/*",
+      "src/main.js",
+      "src/create-icons.js",
+      "src/*.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "src/icon--green.png",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "endOfLine": "auto"
+  }
+}
