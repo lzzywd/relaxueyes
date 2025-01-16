@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>延长提醒</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            border-radius: 8px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .reminder-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .countdown {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            background: #2196f3;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="reminder-container">
+        <div class="message">工作时间即将结束，是否需要延长？</div>
+        <div class="countdown" id="countdown">30秒后自动进入休息</div>
+        <div class="buttons">
+            <button onclick="extend(3)">延长3分钟</button>
+            <button onclick="extend(5)">延长5分钟</button>
+        </div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+        let countdown = 30;
+        let timer;
+
+        function updateCountdown() {
+            document.getElementById('countdown').textContent = 
+                `${countdown}秒后自动进入休息`;
+            if (countdown <= 0) {
+                clearInterval(timer);
+                ipcRenderer.send('reminder-timeout');
+            }
+            countdown--;
+        }
+
+        function extend(minutes) {
+            ipcRenderer.send('extend-time', minutes);
+        }
+
+        timer = setInterval(updateCountdown, 1000);
+        updateCountdown();
+    </script>
+</body>
+</html> 

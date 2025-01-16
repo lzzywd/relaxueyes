@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-app-region: no-drag;
+    }
+    
+    .progress-container {
+      width: 180px;
+      padding: 2px;
+      cursor: default;
+      position: relative;
+      -webkit-app-region: no-drag;
+    }
+    
+    .progress-bar {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1.5px;
+      overflow: hidden;
+      width: 100%;
+      -webkit-app-region: no-drag;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #4CAF50;
+      transform-origin: left;
+      transform: scaleX(0);
+      box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+      -webkit-app-region: no-drag;
+    }
+    
+    .progress-fill:not(.dragging) {
+      transition: transform 0.3s linear, background-color 0.3s;
+    }
+    
+    .progress-text {
+      color: white;
+      font-size: 12px;
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.2s;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      -webkit-app-region: no-drag;
+    }
+
+    .progress-container:hover .progress-text:not(.dragging) {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-container" id="dragHandle">
+    <div class="progress-bar">
+      <div id="progress" class="progress-fill"></div>
+    </div>
+    <div class="progress-text">
+      <span id="mode">工作中</span>
+      <span id="time">25:00</span>
+    </div>
+  </div>
+  
+  <script>
+    const { ipcRenderer } = require('electron');
+    let isDragging = false;
+    let startX, startY;
+
+    const dragHandle = document.getElementById('dragHandle');
+    
+    // 鼠标进入时启用鼠标事件
+    dragHandle.addEventListener('mouseenter', () => {
+      ipcRenderer.send('set-progress-ignore-mouse', false);
+    });
+
+    // 鼠标离开时禁用鼠标事件
+    dragHandle.addEventListener('mouseleave', () => {
+      // 如果不在拖拽中，才禁用鼠标事件
+      if (!isDragging) {
+        ipcRenderer.send('set-progress-ignore-mouse', true);
+      }
+    });
+
+    dragHandle.addEventListener('click', (e) => {
+      // 如果不是拖拽结束的点击，则显示主窗口
+      if (!isDragging) {
+        ipcRenderer.send('show-main-window');
+      }
+    });
+
+    dragHandle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      // 拖动开始时隐藏文字并禁用过渡效果
+      document.querySelector('.progress-text').style.display = 'none';
+      document.querySelector('.progress-fill').classList.add('dragging');
+      ipcRenderer.send('progress-window-drag-start');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        ipcRenderer.send('progress-window-drag', { deltaX, deltaY });
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        // 拖动结束时恢复文字显示和过渡效果
+        document.querySelector('.progress-text').style.display = '';
+        document.querySelector('.progress-fill').classList.remove('dragging');
+        ipcRenderer.send('progress-window-drag-end');
+        // 恢复鼠标事件的忽略状态
+        ipcRenderer.send('set-progress-ignore-mouse', true);
+      }
+    });
+    
+    ipcRenderer.on('update-timer', (event, data) => {
+      const { time, totalTime, isWorking } = data;
+      
+      // 更新模式显示
+      document.getElementById('mode').textContent = isWorking ? '工作中' : '休息中';
+      
+      // 更新时间显示
+      const minutes = Math.floor(time / 60);
+      const seconds = time % 60;
+      document.getElementById('time').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      // 更新进度条（从空到满）
+      const progress = Math.min(((totalTime - time) / totalTime), 1);
+      document.getElementById('progress').style.transform = `scaleX(${progress})`;
+      
+      // 更新进度条颜色
+      const color = isWorking ? '#4CAF50' : '#2196F3';
+      const progressFill = document.getElementById('progress');
+      progressFill.style.backgroundColor = color;
+      progressFill.style.boxShadow = `0 0 4px ${color}`;
+    });
+  </script>
+</body>
+</html> 
